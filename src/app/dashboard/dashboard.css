@@ -1,0 +1,32 @@
+.dash{
+    background-image: url('../../../public/assets/dashboardBg.jpg');
+    background-size: cover;
+    background-position: center;
+    height:auto;
+    width: auto;
+  }
+  
+  .image-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Responsive grid */
+    gap: 16px; /* Space between images */
+  }
+  
+  .image-container {
+    overflow: hidden; /* Crop overflowing parts */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+    transition: transform 0.3s, box-shadow 0.3s; /* Animation for hover */
+  }
+  
+  .image-container:hover {
+    transform: scale(1.05); /* Slightly enlarge on hover */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Deeper shadow on hover */
+  }
+  
+  .image {
+    width: 100%;
+    height: auto; /* Maintain aspect ratio */
+    border-radius: 8px; /* Match the container's rounded corners */
+  }
+  
