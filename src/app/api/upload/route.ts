@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import connectToDb from "@/dbConfig/dbConfig";
 import path from "path";
 import fs from "fs";
 import User, { Images ,UserInterface} from "@/model/userModel";
 import jsonwebtoken, { JwtPayload } from 'jsonwebtoken';
 import { v2 as cloudinary } from 'cloudinary';
 import { v4 as uuidv4 } from 'uuid';
-
+connectToDb();
 // Directory to save uploads locally
 const UPLOAD_DIR = path.resolve(process.env.ROOT_PATH ?? "", "public/uploads");
 interface TokenPayload extends JwtPayload{
