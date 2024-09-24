@@ -30,9 +30,7 @@ export default function Page({ params }: { params: { token: string } }) {
         date: imageInfo.uploadedAt,
         notes: imageInfo.notes || "", // Include notes
         deleting: false // Add a deleting state
-      }));
-      console.log(imagesWithDate);
-      
+      }));  
       setImages(imagesWithDate);
 
       if (imagesWithDate.length === 0) {
