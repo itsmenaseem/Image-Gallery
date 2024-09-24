@@ -56,11 +56,16 @@ export default function Form() {
                 try {
                   const response=await axios.post("/api/user/signup",{name:data.name,email:data.email,password:data.password});
                   toast.success("account created successfully");
-                  router.push("/");
+                 
                 } catch (error:any) {
-                 if(error.status===409)
-                      toast.warn("Account already exists");
+                 if(error.status===409){
+                      toast.warn("Account already exists");}
+                  if(error.status===410){
+                    toast.info("Account not verified");
+                    toast.info("Please check your mail");
+                  }
                 }
+                
             }
             setLoading(false);
    }
@@ -73,7 +78,7 @@ export default function Form() {
           <h1 className="font-dmSans text-zinc-700 font-bold text-2xl dark:text-light_10 ">{logIn?"Welcome Back to":"Unlock New Experiences. Sign up Today"}</h1>
           <h1 className="text-[#0095ff] font-amaranth font-bold text-4xl tracking-tighter transform transition-transform duration-300 ease-in-out hover:scale-125" ><span>Image</span> <span className='text-pretty text-[#73b036]'>Gallery</span></h1>
         </div>
-        <form  onSubmit={submitHandler}>
+        <form  onSubmit={submitHandler} method="post">
           <div className="flex flex-col flex-wrap -mx-3 mb-4 mt-7">
             {/* name */}
             {

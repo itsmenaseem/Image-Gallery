@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import User from "@/model/userModel";
+import User,{Images} from "@/model/userModel";
 import connectToDb from "@/dbConfig/dbConfig";
 import jsonwebtoken from "jsonwebtoken";
 connectToDb();
@@ -25,8 +25,14 @@ export async function GET(req: NextRequest) {
           },{status:401});
         }
         // console.log(user.images);
-        
+          // Find all galleries for the user
+          const userGalleries = await Images.find({ userId: user._id });
+
+          // Extract and combine all images from each gallery document
+          const allImages = userGalleries.reduce((acc, gallery) => {
+            return acc.concat(gallery);
+          }, []);
         return NextResponse.json({
-          "images":user.images
+          "images":allImages
         });
 }

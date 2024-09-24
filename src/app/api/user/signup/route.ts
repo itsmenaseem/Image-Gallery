@@ -2,7 +2,7 @@ import connectToDb from "@/dbConfig/dbConfig";
 import User from "@/model/userModel";
 import { NextRequest, NextResponse } from "next/server";
 import bcryptjs from "bcryptjs";
-
+import { sendMail } from "@/helper/mail";
 // Ensure database is connected
 connectToDb();
 
@@ -15,9 +15,19 @@ export async function POST(request: NextRequest) {
         // Check if email already exists in the database
         const existingUser = await User.findOne({ email });
         if (existingUser) {
-            return NextResponse.json({
-                error: "Email already exists"
-            }, { status: 409 }); // Use 409 Conflict for existing resources
+            console.log(existingUser);
+            
+            if(!existingUser.verified){
+                sendMail(email,existingUser._id);
+                return NextResponse.json({
+                    error: "Email is not verified"
+                }, { status: 410 }); 
+            }
+            else{
+                return NextResponse.json({
+                    error: "Email already exists"
+                }, { status: 409 }); // Use 409 Conflict for existing resources
+            }
         }
 
         // Hash password
@@ -33,13 +43,12 @@ export async function POST(request: NextRequest) {
 
         // Save new user to the database
         const savedUser = await newUser.save();
-
         // Return success response
+        sendMail(email,savedUser._id);
         return NextResponse.json({
             message: "User created successfully",
             success: true,
             user: {
-                id: savedUser._id,
                 name: savedUser.name,
                 email: savedUser.email,
                 createdAt: savedUser.createdAt

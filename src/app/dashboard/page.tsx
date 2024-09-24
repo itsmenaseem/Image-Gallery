@@ -3,15 +3,15 @@ import React, { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import { AiOutlineHeart, AiFillHeart } from 'react-icons/ai';
+import { AiOutlineDownload, AiOutlineDelete, AiOutlineMessage } from 'react-icons/ai';
+import { format } from 'date-fns';
+import { toast } from 'react-toastify';
 
 export default function Page({ params }: { params: { token: string } }) {
-  const [images, setImages] = useState<Array<string>>([]);
+  const [images, setImages] = useState<Array<{ src: string; date: string; notes: string, imageId: string, publicId: string, deleting: boolean }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [showFavorites, setShowFavorites] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loadMoreVisible, setLoadMoreVisible] = useState(true);
   const itemsPerPage = 10;
@@ -21,12 +21,49 @@ export default function Page({ params }: { params: { token: string } }) {
     setLoading(true);
     try {
       const response = await axios.get('/api/dashboard');
-      setImages(response.data.images);
+      console.log(response.data);
+
+      const imagesWithDate = response.data.images.map((imageInfo: any) => ({
+        imageId: imageInfo._id,
+        publicId: imageInfo.publicId,
+        src: imageInfo.imageUrl,
+        date: imageInfo.uploadedAt,
+        notes: imageInfo.notes || "", // Include notes
+        deleting: false // Add a deleting state
+      }));
+      console.log(imagesWithDate);
+      
+      setImages(imagesWithDate);
+
+      if (imagesWithDate.length === 0) {
+        setLoadMoreVisible(false);
+      }
     } catch (error) {
       console.error('Error fetching images:', error);
       setError('Failed to load images. Please try again later.');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function deleteImage(imageId: string, publicId: string) {
+    setImages((prevImages) =>
+      prevImages.map(image =>
+        image.imageId === imageId ? { ...image, deleting: true } : image
+      )
+    );
+
+    try {
+      await axios.post("/api/delete", { imageId, publicId });
+      toast.success("Image deleted");
+      setImages((prevImages) => prevImages.filter(image => image.imageId !== imageId));
+    } catch (error) {
+      toast.error("Delete image failed");
+      setImages((prevImages) =>
+        prevImages.map(image =>
+          image.imageId === imageId ? { ...image, deleting: false } : image
+        )
+      );
     }
   }
 
@@ -50,36 +87,22 @@ export default function Page({ params }: { params: { token: string } }) {
     setSelectedImage(null);
   };
 
-  const toggleFavorite = (image: string) => {
-    setFavorites((prevFavorites) => {
-      if (prevFavorites.includes(image)) {
-        return prevFavorites.filter((fav) => fav !== image);
-      } else {
-        return [...prevFavorites, image];
-      }
-    });
+  const handleDownload = (imageSrc: string) => {
+    if (imageSrc) {
+      const link = document.createElement('a');
+      link.href = imageSrc;
+      link.download = imageSrc.split('/').pop() || 'download';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   return (
     <div className="flex flex-col dash bg-white min-h-screen">
       <Navbar />
-      
-      <div className="p-6 mt-4 pt-20">
-        <div className="flex justify-end mb-4">
-          <button 
-            className={`px-4 py-2 text-white rounded ${!showFavorites ? 'bg-blue-600' : 'bg-gray-400'}`} 
-            onClick={() => { setShowFavorites(false); setError(null); }}
-          >
-            All Images
-          </button>
-          <button 
-            className={`ml-2 px-4 py-2 text-white rounded ${showFavorites ? 'bg-blue-600' : 'bg-gray-400'}`} 
-            onClick={() => { setShowFavorites(true); setError(null); }}
-          >
-            Favorites
-          </button>
-        </div>
 
+      <div className="p-6 mt-4 pt-20">
         {loading ? (
           <div className="flex items-center justify-center min-h-screen">
             <div className="spinner-border animate-spin inline-block w-12 h-12 border-4 rounded-full border-blue-500 border-t-transparent"></div>
@@ -88,37 +111,65 @@ export default function Page({ params }: { params: { token: string } }) {
           <div className="flex items-center justify-center min-h-screen">
             <p className="text-lg font-semibold text-red-600">{error}</p>
           </div>
+        ) : images.length === 0 ? (
+          <div className="flex items-center justify-center min-h-screen">
+            <p className="text-lg font-semibold text-gray-600">No images available.</p>
+          </div>
         ) : (
           <>
-            <h2 className="text-2xl font-bold mb-4">{showFavorites ? 'Favorites' : 'All Images'}</h2>
+            <h2 className="text-2xl font-bold mb-4">All Images</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {(showFavorites ? favorites : images.slice(0, currentIndex + itemsPerPage)).map((image, index) => (
-                <div key={index} className="relative group overflow-hidden rounded-lg shadow-lg cursor-pointer transition-transform transform hover:scale-105">
+              {images.slice(0, currentIndex + itemsPerPage).map((imageObj, index) => (
+                <div
+                  key={index}
+                  className="relative group overflow-hidden rounded-lg shadow-lg cursor-pointer transition-transform transform hover:scale-105"
+                >
                   <img
-                    src={image}
+                    src={imageObj.src}
                     alt={`Image ${index}`}
                     className="w-full h-full object-cover rounded-lg shadow-md border-2 border-white"
-                    onClick={() => handleImageClick(image)}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-80 transition duration-300 ease-in-out rounded-lg">
-                    <div className="absolute bottom-0 left-0 p-4 text-white">
-                      <p className="text-lg font-bold">View Image {index + 1}</p>
-                      <button onClick={(e) => { e.stopPropagation(); toggleFavorite(image); }}>
-                        {favorites.includes(image) ? (
-                          <AiFillHeart className="text-red-500 text-2xl" />
-                        ) : (
-                          <AiOutlineHeart className="text-white text-2xl" />
-                        )}
-                      </button>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-80 transition-opacity duration-300 ease-in-out rounded-lg flex flex-col justify-end">
+                    <div className="p-4 text-white">
+                      <p className="text-sm">
+                        {format(new Date(imageObj.date), 'MMM dd, yyyy, hh:mm:ss a')}
+                      </p>
+                      {/* Message Icon to show notes */}
+                      <div className="flex space-x-2 mt-2 items-center">
+                        <button>
+                          <AiOutlineMessage className="text-white text-2xl hover:text-blue-800 transition-colors duration-300" />
+                        </button>
+                        <p className="text-sm italic opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          {imageObj.notes}
+                        </p>
+                      </div>
+                      <div className="flex space-x-2 mt-2">
+                        <button onClick={() => handleDownload(imageObj.src)}>
+                          <AiOutlineDownload className="text-white text-2xl" />
+                        </button>
+                        <button onClick={() => deleteImage(imageObj.imageId, imageObj.publicId)}>
+                          {imageObj.deleting ? (
+                            <div className="spinner-border animate-spin inline-block w-6 h-6 border-4 rounded-full border-white border-t-transparent"></div>
+                          ) : (
+                            <AiOutlineDelete className="text-red-500 text-2xl" />
+                          )}
+                        </button>
+                      </div>
                     </div>
+                    <button
+                      onClick={() => handleImageClick(imageObj.src)}
+                      className=" text-white py-2 px-4 rounded mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    >
+                      View Image
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
 
-            {loadMoreVisible && (
+            {loadMoreVisible && images.length > itemsPerPage && (
               <div className="flex justify-center mt-4">
-                <button 
+                <button
                   className="px-4 py-2 bg-blue-600 text-white rounded"
                   onClick={loadMoreImages}
                   disabled={loading}
