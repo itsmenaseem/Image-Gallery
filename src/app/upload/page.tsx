@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import Link from 'next/link';
 import { useRouter } from "next/navigation";
 import { AiOutlineFileText } from "react-icons/ai"; // Import a pen icon for notes
-import axios from "axios";
+import axios, { AxiosError } from 'axios';
 
 export default function Form() {
   const [dragging, setDragging] = useState(false);
@@ -40,10 +40,13 @@ export default function Form() {
 
       toast.success("Uploaded successfully");
     } catch (error) {
+      const axiosError = error as AxiosError;
+      if (axiosError.response?.status === 402) 
+          toast.error("Invalid file format");
+      if(axiosError.response?.status === 501)
+          toast.error("Server Error");
       router.push("/");
-      console.log(error);
-      
-      toast.error("Failed to upload");
+      // toast.error("Failed to upload");
     } finally {
       setLoading(false);
       setFileName("");
