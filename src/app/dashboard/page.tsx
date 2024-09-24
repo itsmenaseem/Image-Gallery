@@ -129,7 +129,7 @@ export default function Page({ params }: { params: { token: string } }) {
                     alt={`Image ${index}`}
                     className="w-full h-full object-cover rounded-lg shadow-md border-2 border-white"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-80 transition-opacity duration-300 ease-in-out rounded-lg flex flex-col justify-end">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent rounded-lg flex flex-col justify-end">
                     <div className="p-4 text-white">
                       <p className="text-sm">
                         {format(new Date(imageObj.date), 'MMM dd, yyyy, hh:mm:ss a')}
@@ -139,7 +139,7 @@ export default function Page({ params }: { params: { token: string } }) {
                         <button>
                           <AiOutlineMessage className="text-white text-2xl hover:text-blue-800 transition-colors duration-300" />
                         </button>
-                        <p className="text-sm italic opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <p className="text-sm italic ">
                           {imageObj.notes}
                         </p>
                       </div>

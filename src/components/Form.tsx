@@ -56,14 +56,11 @@ export default function Form() {
                 try {
                   const response=await axios.post("/api/user/signup",{name:data.name,email:data.email,password:data.password});
                   toast.success("account created successfully");
-                 
+                  router.push(`/dashboard`);
                 } catch (error:any) {
-                 if(error.status===409){
-                      toast.warn("Account already exists");}
-                  if(error.status===410){
-                    toast.info("Account not verified");
-                    toast.info("Please check your mail");
-                  }
+                 if(error.status===409)
+                      toast.warn("Account already exists");
+                  
                 }
                 
             }

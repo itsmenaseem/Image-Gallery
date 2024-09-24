@@ -1,8 +1,8 @@
 import connectToDb from "@/dbConfig/dbConfig";
 import User from "@/model/userModel";
 import { NextRequest, NextResponse } from "next/server";
+import jwt from "jsonwebtoken"
 import bcryptjs from "bcryptjs";
-import { sendMail } from "@/helper/mail";
 // Ensure database is connected
 connectToDb();
 
@@ -15,19 +15,9 @@ export async function POST(request: NextRequest) {
         // Check if email already exists in the database
         const existingUser = await User.findOne({ email });
         if (existingUser) {
-            console.log(existingUser);
-            
-            if(!existingUser.verified){
-                sendMail(email,existingUser._id);
-                return NextResponse.json({
-                    error: "Email is not verified"
-                }, { status: 410 }); 
-            }
-            else{
                 return NextResponse.json({
                     error: "Email already exists"
-                }, { status: 409 }); // Use 409 Conflict for existing resources
-            }
+                }, { status: 409 }); // Use 409 Conflict for existing resource
         }
 
         // Hash password
@@ -44,16 +34,24 @@ export async function POST(request: NextRequest) {
         // Save new user to the database
         const savedUser = await newUser.save();
         // Return success response
-        sendMail(email,savedUser._id);
-        return NextResponse.json({
-            message: "User created successfully",
-            success: true,
-            user: {
-                name: savedUser.name,
-                email: savedUser.email,
-                createdAt: savedUser.createdAt
-            }
-        }, { status: 201 }); // Use 201 Created for successful creation
+         // Create a JWT token
+         const tokenPayload = { id: savedUser._id };
+         const loginToken = jwt.sign(tokenPayload, process.env.SECRET_TOKEN!, { expiresIn: "1h" });
+ 
+         // Prepare the response
+         const response = NextResponse.json({
+             msg: "Account created successful",
+         }, { status: 200 });
+ 
+         // Set token as an httpOnly cookie
+         response.cookies.set("loginToken",loginToken, {
+             httpOnly: true,
+             secure: process.env.NODE_ENV === "production", // Only secure in production
+             maxAge: 60 * 60, // 1 hour
+             path: "/"
+         });
+ 
+         return response;
 
     } catch (error: any) {
         // Log error and return server error response
