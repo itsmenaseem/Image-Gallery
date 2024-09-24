@@ -1,20 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectToDb from "@/dbConfig/dbConfig";
-import path from "path";
-import fs from "fs";
 import User, { Images, UserInterface } from "@/model/userModel";
 import jsonwebtoken, { JwtPayload } from 'jsonwebtoken';
 import { v2 as cloudinary } from 'cloudinary';
 import { v4 as uuidv4 } from 'uuid';
+import { Readable } from 'stream';
 
 connectToDb();
-
-// Directory to save uploads locally
-const UPLOAD_DIR = path.resolve(process.env.ROOT_PATH ?? "", "public/uploads");
-
-interface TokenPayload extends JwtPayload {
-  id: string; // or number, depending on your implementation
-}
 
 // Cloudinary Configuration
 cloudinary.config({
@@ -22,6 +14,18 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_SECRET_KEY,
 });
+
+// Define the TokenPayload interface
+interface TokenPayload extends JwtPayload {
+  id: string; // or number, depending on your implementation
+}
+
+// Define the type for Cloudinary upload result
+interface CloudinaryUploadResult {
+  secure_url: string;
+  public_id: string;
+  // Add other properties if needed based on the Cloudinary response
+}
 
 export const POST = async (req: NextRequest) => {
   // Get login token from cookies
@@ -67,28 +71,34 @@ export const POST = async (req: NextRequest) => {
       return NextResponse.json({
         success: false,
         message: "Only images are allowed. Supported formats: JPEG, PNG, GIF, WEBP.",
-      },{status:402});
+      }, { status: 402 });
     }
 
-    // Ensure the upload directory exists
-    if (!fs.existsSync(UPLOAD_DIR)) {
-      fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-    }
-
-    // Convert file to buffer and save it locally
+    // Convert the file to a Readable stream
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    const filePath = path.resolve(UPLOAD_DIR, file.name);
-    fs.writeFileSync(filePath, buffer);
+    const readableStream = new Readable();
+    readableStream.push(buffer);
+    readableStream.push(null); // Signal that no more data will be pushed
 
-    // Upload file to Cloudinary with a unique ID
+    // Upload file to Cloudinary directly from the stream
     const cloudinaryId = uuidv4() + file.name;
-    const uploadResult = await cloudinary.uploader.upload(filePath, {
-      public_id: cloudinaryId,
+    const uploadResult = await new Promise<CloudinaryUploadResult>((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        {
+          public_id: cloudinaryId,
+          resource_type: 'image',
+        },
+        (error, result) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(result as CloudinaryUploadResult); // Cast to expected type
+          }
+        }
+      ).end(buffer); // End the stream with the buffer
     });
 
-    // Remove the local file after successful upload
-    fs.unlinkSync(filePath);
     console.log(uploadResult);
     
     // Associate uploaded image and notes with the user in the database
@@ -113,7 +123,7 @@ export const POST = async (req: NextRequest) => {
     console.error("File upload error:", error);
     return NextResponse.json({
       success: false,
-      message: "Error uploading file",
-    },{status:501});
+      message: "Error uploading file: " + (error instanceof Error ? error.message : "Unknown error"),
+    }, { status: 501 });
   }
 };
