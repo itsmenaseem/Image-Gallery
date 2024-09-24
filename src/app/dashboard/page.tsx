@@ -2,12 +2,22 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import axios from 'axios';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { AiOutlineDownload, AiOutlineDelete, AiOutlineMessage } from 'react-icons/ai';
 import { format } from 'date-fns';
 import { toast } from 'react-toastify';
 
-export default function Page({ params }: { params: { token: string } }) {
+interface ImageData{
+  _id: string;
+  publicId: string;
+  imageUrl: string;
+  uploadedAt: string;
+  date: string;
+  notes: string;
+}
+
+export default function Page() {
   const [images, setImages] = useState<Array<{ src: string; date: string; notes: string, imageId: string, publicId: string, deleting: boolean }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -15,15 +25,13 @@ export default function Page({ params }: { params: { token: string } }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loadMoreVisible, setLoadMoreVisible] = useState(true);
   const itemsPerPage = 10;
-  const router = useRouter();
-
   async function getImages() {
     setLoading(true);
     try {
       const response = await axios.get('/api/dashboard');
       console.log(response.data);
 
-      const imagesWithDate = response.data.images.map((imageInfo: any) => ({
+      const imagesWithDate = response.data.images.map((imageInfo:ImageData) => ({
         imageId: imageInfo._id,
         publicId: imageInfo.publicId,
         src: imageInfo.imageUrl,
@@ -36,7 +44,7 @@ export default function Page({ params }: { params: { token: string } }) {
       if (imagesWithDate.length === 0) {
         setLoadMoreVisible(false);
       }
-    } catch (error) {
+    } catch (error:unknown) {
       console.error('Error fetching images:', error);
       setError('Failed to load images. Please try again later.');
     } finally {
@@ -122,7 +130,7 @@ export default function Page({ params }: { params: { token: string } }) {
                   key={index}
                   className="relative group overflow-hidden rounded-lg shadow-lg cursor-pointer transition-transform transform hover:scale-105"
                 >
-                  <img
+                  <Image
                     src={imageObj.src}
                     alt={`Image ${index}`}
                     className="w-full h-full object-cover rounded-lg shadow-md border-2 border-white"

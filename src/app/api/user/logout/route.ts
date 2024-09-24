@@ -1,5 +1,5 @@
 import { NextResponse ,NextRequest} from "next/server";
-export function GET(request:NextRequest){
+export function GET(){
     try {
         const response=NextResponse.json({
             message:"Logout succesfull",
@@ -10,9 +10,9 @@ export function GET(request:NextRequest){
             httpOnly:true,expires:new Date(0)
         });
         return response;
-    } catch (error:any) {
+    } catch (error:unknown) {
         return NextResponse.json(
-            {eroor:error.message}
+            {error:"error"}
         ,{status:500})
     }
 }

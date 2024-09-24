@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import User,{Images} from "@/model/userModel";
 import connectToDb from "@/dbConfig/dbConfig";
-import jsonwebtoken from "jsonwebtoken";
+import jsonwebtoken, { JwtPayload } from 'jsonwebtoken';
 connectToDb();
+interface TokenPayload {
+  id: string; // or number, depending on your implementation
+  // Add any other properties that your token might include
+}
 export async function GET(req: NextRequest) {
     const loginToken=req.cookies.get("loginToken")?.value;
     if (!loginToken) {
@@ -12,13 +16,13 @@ export async function GET(req: NextRequest) {
         let user;
         try {
           // Verify the token only if loginToken is defined
-          console.log(process.env.SECRET_TOKEN);
-          const tokenPayload:any = jsonwebtoken.verify(loginToken, process.env.SECRET_TOKEN!);
+          const decodedToken = jsonwebtoken.verify(loginToken, process.env.SECRET_TOKEN!) as JwtPayload | string;
+          const tokenPayload= decodedToken as TokenPayload
           // Continue processing with the verified token
           user = await User.findById(tokenPayload.id);
           if(!user) throw new Error(`Could not find`);
-        } catch (error) {
-          console.error('Token verification failed:');  // Log the verification error
+        } catch (error:unknown) {
+          console.error('Token verification failed:',error);  // Log the verification error
           // Handle verification error (e.g., redirect to login page)
           return NextResponse.json({
             msg:"Verification failed"

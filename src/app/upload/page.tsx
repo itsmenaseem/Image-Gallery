@@ -36,11 +36,13 @@ export default function Form() {
   const uploadFiles = async (formData: FormData) => {
     try {
       setLoading(true); // Set loading to true
-      const response = await axios.post("api/upload", formData);
+       await axios.post("api/upload", formData);
 
       toast.success("Uploaded successfully");
     } catch (error) {
       router.push("/");
+      console.log(error);
+      
       toast.error("Failed to upload");
     } finally {
       setLoading(false);

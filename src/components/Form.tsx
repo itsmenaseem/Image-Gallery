@@ -1,12 +1,12 @@
-import axios from 'axios';
-import React, { useEffect ,useState} from 'react';
+"use client"
+import axios, { AxiosError } from 'axios';
+import React, { ChangeEvent, FormEvent, useState} from 'react';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
 import { ClipLoader } from 'react-spinners'; // Import spinner component
-import { Cipher } from 'crypto';
 export default function Form() {
-  const [show,setShow]=useState<Boolean>(false);
-  const [show1,setShow1]=useState<Boolean>(false);
+  const [show,setShow]=useState<boolean>(false);
+  const [show1,setShow1]=useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
   const[data,setData]=useState({
@@ -16,12 +16,12 @@ export default function Form() {
     confirmPassword:""
   });
 
-  function changeHandler(e:any){
+  function changeHandler(e:ChangeEvent<HTMLInputElement>){
       setData((pre) =>{
         return {...pre,[e.target.name]:e.target.value}
       })
   }  
-  const [logIn,setLogIn]=useState<Boolean>(true);
+  const [logIn,setLogIn]=useState<boolean>(true);
   function clickHandler(logIn:boolean){
     setData({
     email:"",
@@ -33,16 +33,18 @@ export default function Form() {
     setShow(false)
     setShow1(false)
   }
-   async function submitHandler(e:any){
+   async function submitHandler(e:FormEvent<HTMLFormElement>){
             e.preventDefault();
             setLoading(true); 
             // login form
             if(logIn){
                 try {
-                  const response=await axios.post("/api/user/login",{email:data.email,password:data.password});
+                 await axios.post("/api/user/login",{email:data.email,password:data.password});
                   toast.success("User logged");
                   router.push(`/dashboard`);
-                } catch (error) {
+                } catch (error:unknown) {
+                    console.log(error);
+                    
                     toast.error("Invalid Credentials");
                 }
             }
@@ -54,13 +56,19 @@ export default function Form() {
                     return;
                 }
                 try {
-                  const response=await axios.post("/api/user/signup",{name:data.name,email:data.email,password:data.password});
+                  await axios.post("/api/user/signup",{name:data.name,email:data.email,password:data.password});
                   toast.success("account created successfully");
                   router.push(`/dashboard`);
-                } catch (error:any) {
-                 if(error.status===409)
+                } catch (error) {
+                  const axiosError = error as AxiosError;
+
+                  if (axiosError.response?.status === 409) {
                       toast.warn("Account already exists");
-                  
+                  } else {
+                      // Handle other potential errors
+                      toast.error("An error occurred. Please try again.");
+                  }
+              
                 }
                 
             }

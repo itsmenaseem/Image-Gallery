@@ -53,11 +53,11 @@ export async function POST(request: NextRequest) {
  
          return response;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         // Log error and return server error response
-        console.error("Error in POST request:", error.message);
+        console.error("Error in POST request:", error);
         return NextResponse.json({
-            error: error.message || "An unknown error occurred"
+            error:  "An unknown error occurred"
         }, { status: 500 });
     }
 }

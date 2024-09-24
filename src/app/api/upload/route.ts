@@ -2,13 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 import User, { Images } from "@/model/userModel";
-import jsonwebtoken from "jsonwebtoken";
+import jsonwebtoken, { JwtPayload } from 'jsonwebtoken';
 import { v2 as cloudinary } from 'cloudinary';
 import { v4 as uuidv4 } from 'uuid';
 
 // Directory to save uploads locally
 const UPLOAD_DIR = path.resolve(process.env.ROOT_PATH ?? "", "public/uploads");
-
+interface TokenPayload extends JwtPayload{
+  id: string; // or number, depending on your implementation
+  // Add any other properties that your token might include
+}
 // Cloudinary Configuration
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_NAME,
@@ -25,17 +28,17 @@ export const POST = async (req: NextRequest) => {
     return NextResponse.json({ msg: "Login required" }, { status: 401 });
   }
 
-  let user;
+  let user:any;
   try {
     // Verify JWT and extract user information
-    const tokenPayload: any = jsonwebtoken.verify(loginToken, process.env.SECRET_TOKEN!);
+    const decodedToken = jsonwebtoken.verify(loginToken, process.env.SECRET_TOKEN!) as JwtPayload | string;
+    const tokenPayload= decodedToken as TokenPayload
     user = await User.findById(tokenPayload.id);
-
     if (!user) {
       throw new Error("User not found");
     }
-  } catch (error:any) {
-    console.error("Token verification failed:", error.message);
+  } catch (error:unknown) {
+    console.error("Token verification failed:", error);
     return NextResponse.json({ msg: "Invalid token" }, { status: 401 });
   }
 
@@ -92,7 +95,7 @@ export const POST = async (req: NextRequest) => {
       url: uploadResult.secure_url,
        // Include notes in response
     });
-  } catch (error) {
+  } catch (error:unknown) {
     console.error("File upload error:", error);
     return NextResponse.json({
       success: false,

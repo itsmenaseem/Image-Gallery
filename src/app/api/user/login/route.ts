@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Verify the password
-        const isPasswordMatched = await bcryptjs.compare(password, user.password);
+        const isPasswordMatched:boolean = await bcryptjs.compare(password, user.password);
         if (!isPasswordMatched) {
             return NextResponse.json({
                 msg: "Invalid password"
@@ -44,10 +44,10 @@ export async function POST(request: NextRequest) {
         });
 
         return response;
-    } catch (error: any) {
-        console.error("Error during login:", error.message);
+    } catch (error: unknown) {
+        console.error("Error during login:", error);
         return NextResponse.json({
-            msg: error.message || "An unknown error occurred"
+            msg:  "An unknown error occurred"
         }, { status: 500 });
     }
 }
