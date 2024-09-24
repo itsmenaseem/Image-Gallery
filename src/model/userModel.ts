@@ -1,12 +1,9 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-interface UserInterface extends Document {
+export interface UserInterface extends Document {
     name: string;
     email: string;
     password: string;
-    verifyToken:string;
-    verifyTokenExpiry: Date;
-    verified: boolean;
     createdAt: Date;
 }
 
@@ -14,9 +11,6 @@ const userSchema: Schema<UserInterface> = new Schema({
     name: { type: String, required: true },
     email: { type: String, required: true },
     password: { type: String, required: true },
-    verifyToken: { type: String },
-    verifyTokenExpiry: { type: Date },
-    verified: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now }
 });
 

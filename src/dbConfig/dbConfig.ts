@@ -8,8 +8,8 @@ export default  async function connectToDb(){
             console.log("Connected to database");
             
         })
-    } catch (error) {
-        console.log("Error connecting to database");
+    } catch (error:unknown) {
+        console.log("Error connecting to database",error);
         
     }
 }

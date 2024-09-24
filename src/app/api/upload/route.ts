@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
-import User, { Images } from "@/model/userModel";
+import User, { Images ,UserInterface} from "@/model/userModel";
 import jsonwebtoken, { JwtPayload } from 'jsonwebtoken';
 import { v2 as cloudinary } from 'cloudinary';
 import { v4 as uuidv4 } from 'uuid';
@@ -28,7 +28,7 @@ export const POST = async (req: NextRequest) => {
     return NextResponse.json({ msg: "Login required" }, { status: 401 });
   }
 
-  let user:any;
+  let user:UserInterface | null;
   try {
     // Verify JWT and extract user information
     const decodedToken = jsonwebtoken.verify(loginToken, process.env.SECRET_TOKEN!) as JwtPayload | string;

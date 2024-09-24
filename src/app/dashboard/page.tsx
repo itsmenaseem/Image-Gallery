@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import axios from 'axios';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import { AiOutlineDownload, AiOutlineDelete, AiOutlineMessage } from 'react-icons/ai';
 import { format } from 'date-fns';
 import { toast } from 'react-toastify';
@@ -63,7 +62,8 @@ export default function Page() {
       await axios.post("/api/delete", { imageId, publicId });
       toast.success("Image deleted");
       setImages((prevImages) => prevImages.filter(image => image.imageId !== imageId));
-    } catch (error) {
+    } catch (error:unknown) {
+      console.error('Error deleting image:', error);
       toast.error("Delete image failed");
       setImages((prevImages) =>
         prevImages.map(image =>
@@ -124,54 +124,55 @@ export default function Page() {
         ) : (
           <>
             <h2 className="text-2xl font-bold mb-4">All Images</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {images.slice(0, currentIndex + itemsPerPage).map((imageObj, index) => (
-                <div
-                  key={index}
-                  className="relative group overflow-hidden rounded-lg shadow-lg cursor-pointer transition-transform transform hover:scale-105"
-                >
-                  <Image
-                    src={imageObj.src}
-                    alt={`Image ${index}`}
-                    className="w-full h-full object-cover rounded-lg shadow-md border-2 border-white"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent rounded-lg flex flex-col justify-end">
-                    <div className="p-4 text-white">
-                      <p className="text-sm">
-                        {format(new Date(imageObj.date), 'MMM dd, yyyy, hh:mm:ss a')}
-                      </p>
-                      {/* Message Icon to show notes */}
-                      <div className="flex space-x-2 mt-2 items-center">
-                        <button>
-                          <AiOutlineMessage className="text-white text-2xl hover:text-blue-800 transition-colors duration-300" />
-                        </button>
-                        <p className="text-sm italic ">
-                          {imageObj.notes}
-                        </p>
-                      </div>
-                      <div className="flex space-x-2 mt-2">
-                        <button onClick={() => handleDownload(imageObj.src)}>
-                          <AiOutlineDownload className="text-white text-2xl" />
-                        </button>
-                        <button onClick={() => deleteImage(imageObj.imageId, imageObj.publicId)}>
-                          {imageObj.deleting ? (
-                            <div className="spinner-border animate-spin inline-block w-6 h-6 border-4 rounded-full border-white border-t-transparent"></div>
-                          ) : (
-                            <AiOutlineDelete className="text-red-500 text-2xl" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleImageClick(imageObj.src)}
-                      className=" text-white py-2 px-4 rounded mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    >
-                      View Image
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {images.slice(0, currentIndex + itemsPerPage).map((imageObj, index) => (
+            <div
+              key={index}
+              className="relative group overflow-hidden rounded-lg shadow-lg cursor-pointer transition-transform transform hover:scale-105"
+            >
+              <Image
+                src={imageObj.src}
+                alt={`Image ${index}`}
+                layout="responsive"
+                height={200}
+                width={300}
+                className="w-full h-full object-cover rounded-lg shadow-md border-2 border-white"
+              />
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent rounded-lg flex flex-col justify-end">
+        <div className="p-4 text-white">
+          <p className="text-sm">
+            {format(new Date(imageObj.date), 'MMM dd, yyyy, hh:mm:ss a')}
+          </p>
+          <div className="flex space-x-2 mt-2 items-center">
+            <button>
+              <AiOutlineMessage className="text-white text-2xl hover:text-blue-800 transition-colors duration-300" />
+            </button>
+            <p className="text-sm italic">{imageObj.notes}</p>
+          </div>
+          <div className="flex space-x-2 mt-2">
+            <button onClick={() => handleDownload(imageObj.src)}>
+              <AiOutlineDownload className="text-white text-2xl" />
+            </button>
+            <button onClick={() => deleteImage(imageObj.imageId, imageObj.publicId)}>
+              {imageObj.deleting ? (
+                <div className="spinner-border animate-spin inline-block w-6 h-6 border-4 rounded-full border-white border-t-transparent"></div>
+              ) : (
+                <AiOutlineDelete className="text-red-500 text-2xl" />
+              )}
+            </button>
+          </div>
+        </div>
+        <button
+          onClick={() => handleImageClick(imageObj.src)}
+          className=" text-white py-2 px-4 rounded mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        >
+          View Image
+        </button>
+      </div>
+    </div>
+  ))}
+</div>
+
 
             {loadMoreVisible && images.length > itemsPerPage && (
               <div className="flex justify-center mt-4">
@@ -197,9 +198,11 @@ export default function Page() {
             >
               &times;
             </button>
-            <img
+            <Image
               src={selectedImage}
               alt="Selected"
+               height={400}
+               width={400}
               className="max-w-full max-h-screen rounded-lg shadow-lg"
             />
           </div>

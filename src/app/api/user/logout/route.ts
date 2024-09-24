@@ -1,4 +1,4 @@
-import { NextResponse ,NextRequest} from "next/server";
+import { NextResponse} from "next/server";
 export function GET(){
     try {
         const response=NextResponse.json({
@@ -11,6 +11,7 @@ export function GET(){
         });
         return response;
     } catch (error:unknown) {
+        console.error("Error during logout:", error);
         return NextResponse.json(
             {error:"error"}
         ,{status:500})
