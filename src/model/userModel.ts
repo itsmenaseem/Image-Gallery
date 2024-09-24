@@ -5,7 +5,7 @@ interface UserInterface extends Document {
     email: string;
     password: string;
     verifyToken:string;
-    verifyTokenExpires: Date;
+    verifyTokenExpiry: Date;
     verified: boolean;
     createdAt: Date;
 }
